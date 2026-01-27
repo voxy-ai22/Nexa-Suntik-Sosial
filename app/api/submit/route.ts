@@ -16,9 +16,11 @@ export async function POST(req: NextRequest) {
     const identifier = req.headers.get('x-forwarded-for')?.split(',')[0] || 'local-user';
 
     if (serviceType === 'free') {
+      if (jumlahView > 3000) return NextResponse.json({ message: 'Layanan Free maksimal 3000 views' }, { status: 400 });
+      
       const rateLimit = await checkRateLimit(identifier);
       if (!rateLimit.allowed) {
-        return NextResponse.json({ message: `Limit: Tunggu ${rateLimit.waitTimeHours} jam.` }, { status: 429 });
+        return NextResponse.json({ message: `Limit Free: Tunggu ${rateLimit.waitTimeHours} jam lagi.` }, { status: 429 });
       }
 
       const result = await sql`
@@ -29,6 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(result[0]);
     } else {
       if (!phoneNumber) return NextResponse.json({ message: 'Nomor HP wajib untuk Premium' }, { status: 400 });
+      if (jumlahView > 50000) return NextResponse.json({ message: 'Maksimal order Premium adalah 50.000 views' }, { status: 400 });
       
       const expiredAt = new Date(Date.now() + 60 * 1000); // 60 detik
 
