@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
 
     const identifier = req.headers.get('x-forwarded-for')?.split(',')[0] || 'local-user';
 
-    if (serviceType === 'free') {
+    if (serviceType.toUpperCase() === 'FREE') {
+      // Validasi Limit Free
       if (jumlahView > 3000) return NextResponse.json({ message: 'Layanan Free maksimal 3000 views' }, { status: 400 });
       
       const rateLimit = await checkRateLimit(identifier);
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: `Limit Free: Tunggu ${rateLimit.waitTimeHours} jam lagi.` }, { status: 429 });
       }
 
+      // Free tidak butuh phone_number
       const result = await sql`
         INSERT INTO orders (device_id, service_type, tiktok_link, views, status)
         VALUES (${deviceId}, 'FREE', ${linkTikTok}, ${jumlahView}, 'processing')
@@ -30,10 +32,17 @@ export async function POST(req: NextRequest) {
       `;
       return NextResponse.json(result[0]);
     } else {
-      if (!phoneNumber) return NextResponse.json({ message: 'Nomor HP wajib untuk Premium' }, { status: 400 });
-      if (jumlahView > 50000) return NextResponse.json({ message: 'Maksimal order Premium adalah 50.000 views' }, { status: 400 });
+      // Premium Service
+      if (!phoneNumber) {
+        return NextResponse.json({ message: 'Nomor WhatsApp wajib untuk Premium (untuk koordinasi/refund)' }, { status: 400 });
+      }
       
-      const expiredAt = new Date(Date.now() + 60 * 1000); // 60 detik
+      // Limit Premium ditingkatkan ke 200.000 views
+      if (jumlahView > 200000) {
+        return NextResponse.json({ message: 'Maksimal order Premium adalah 200.000 views' }, { status: 400 });
+      }
+      
+      const expiredAt = new Date(Date.now() + 60 * 1000); // 60 detik batas upload bukti
 
       const result = await sql`
         INSERT INTO orders (device_id, service_type, tiktok_link, phone_number, views, status, qris_expired_at)

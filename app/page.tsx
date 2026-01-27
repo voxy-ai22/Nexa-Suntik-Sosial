@@ -20,7 +20,7 @@ export default function Home() {
   const [deviceId, setDeviceId] = useState('');
   const [userHistory, setUserHistory] = useState<any[]>([]);
 
-  // Harga: 100 per 1000 views
+  // Harga: 100 per 1000 views (Premium)
   const calculatePrice = (views: number) => Math.max(100, Math.floor((views / 1000) * 100));
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [orderResult, timer]);
 
-  // Real-time sync: Cek status pesanan aktif setiap 5 detik
+  // Real-time status sync
   useEffect(() => {
     let checkInterval: any;
     if (orderResult && (orderResult.status === 'waiting_admin' || orderResult.status === 'processing' || orderResult.status === 'pending_payment')) {
@@ -165,6 +165,7 @@ export default function Home() {
                       key={type} type="button" onClick={() => {
                         setServiceType(type);
                         setJumlahView(1000);
+                        if (type === 'FREE') setPhoneNumber('');
                       }}
                       className={`flex-1 py-4 rounded-[24px] text-xs font-black transition-all uppercase tracking-widest ${
                         serviceType === type ? 'bg-white text-blue-600 shadow-xl shadow-blue-50 border border-slate-50' : 'text-slate-400 hover:text-slate-600'
@@ -202,13 +203,13 @@ export default function Home() {
                       <span className="text-blue-600 font-black text-2xl tracking-tighter italic">{jumlahView.toLocaleString()} Views</span>
                     </div>
                     <input
-                      type="range" min="1000" max={serviceType === 'FREE' ? 2900 : 50000} step="100"
+                      type="range" min="1000" max={serviceType === 'FREE' ? 2900 : 200000} step="1000"
                       className="w-full h-2 bg-slate-100 rounded-full appearance-none cursor-pointer accent-blue-600"
                       value={jumlahView} onChange={(e) => setJumlahView(parseInt(e.target.value))}
                     />
                     <div className="flex justify-between px-2">
-                       <span className="text-[9px] font-bold text-slate-300">1K</span>
-                       <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Maksimal {serviceType === 'FREE' ? '3K' : '50K'}</span>
+                       <span className="text-[9px] font-bold text-slate-300">1.000</span>
+                       <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Maksimal {serviceType === 'FREE' ? '2.9K' : '200K'}</span>
                     </div>
                   </div>
                 </div>

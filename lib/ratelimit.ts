@@ -1,15 +1,15 @@
-
 import { sql } from './db';
 
 export async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; waitTimeHours?: number }> {
   // Free service: 1 request per 25 hours
   const hoursLimit = 25;
   
+  // Menggunakan tabel orders (karena device_id bertindak sebagai identifier di skema utama)
   const lastRequest = await sql`
     SELECT created_at 
-    FROM requests 
-    WHERE identifier = ${identifier} 
-    AND service_type = 'free'
+    FROM orders 
+    WHERE device_id = ${identifier} 
+    AND service_type = 'FREE'
     ORDER BY created_at DESC 
     LIMIT 1
   `;

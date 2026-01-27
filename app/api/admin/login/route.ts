@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ADMIN_KEY = "pFBenCy/X3Y53LboNgA00mtt7P/d4IOmxBQ63HewPNw=";
-
 export async function POST(req: NextRequest) {
   try {
     const { key } = await req.json();
+    
+    // Sekarang mengambil kunci dari environment variable KEY_ADMIN
+    const ADMIN_KEY = process.env.KEY_ADMIN;
+
+    if (!ADMIN_KEY) {
+      console.error("Environment variable KEY_ADMIN belum dikonfigurasi!");
+      return NextResponse.json({ message: 'Server Configuration Error' }, { status: 500 });
+    }
     
     if (key === ADMIN_KEY) {
       const response = NextResponse.json({ success: true });
