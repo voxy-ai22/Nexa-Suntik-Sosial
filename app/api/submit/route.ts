@@ -13,13 +13,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Data tidak lengkap' }, { status: 400 });
     }
 
-    const identifier = req.headers.get('x-forwarded-for')?.split(',')[0] || 'local-user';
-
     if (serviceType.toUpperCase() === 'FREE') {
-      // Validasi Limit Free
+      // Validasi Limit Free (Tetap 3000)
       if (jumlahView > 3000) return NextResponse.json({ message: 'Layanan Free maksimal 3000 views' }, { status: 400 });
       
-      const rateLimit = await checkRateLimit(identifier);
+      // Gunakan deviceId untuk pengecekan rate limit sesuai implementasi di lib/ratelimit.ts
+      const rateLimit = await checkRateLimit(deviceId);
       if (!rateLimit.allowed) {
         return NextResponse.json({ message: `Limit Free: Tunggu ${rateLimit.waitTimeHours} jam lagi.` }, { status: 429 });
       }
@@ -34,7 +33,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Premium Service
       if (!phoneNumber) {
-        return NextResponse.json({ message: 'Nomor WhatsApp wajib untuk Premium (untuk koordinasi/refund)' }, { status: 400 });
+        return NextResponse.json({ message: 'Nomor WhatsApp wajib untuk Premium (untuk bantuan refund)' }, { status: 400 });
       }
       
       // Limit Premium ditingkatkan ke 200.000 views
