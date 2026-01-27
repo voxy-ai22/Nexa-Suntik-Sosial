@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminKey } from '@/lib/auth';
+
+const ADMIN_KEY = "pFBenCy/X3Y53LboNgA00mtt7P/d4IOmxBQ63HewPNw=";
 
 export async function POST(req: NextRequest) {
   try {
     const { key } = await req.json();
     
-    if (verifyAdminKey(key)) {
+    if (key === ADMIN_KEY) {
       const response = NextResponse.json({ success: true });
       response.cookies.set('admin_auth', 'true', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 60 * 60 * 24, // 24 hours
+        maxAge: 60 * 60 * 24, // 24 jam
         path: '/',
       });
       return response;
