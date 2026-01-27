@@ -9,18 +9,18 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const type = searchParams.get('type') || 'all'; // free, premium, all
+    const type = searchParams.get('type') || 'ALL';
 
     let data;
-    if (type === 'all') {
-      data = await sql`SELECT * FROM requests ORDER BY created_at DESC`;
+    if (type === 'ALL') {
+      data = await sql`SELECT * FROM orders ORDER BY created_at DESC`;
     } else {
-      data = await sql`SELECT * FROM requests WHERE service_type = ${type} ORDER BY created_at DESC`;
+      data = await sql`SELECT * FROM orders WHERE service_type = ${type} ORDER BY created_at DESC`;
     }
     
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ message: 'Error' }, { status: 500 });
+    return NextResponse.json({ message: 'Error fetching orders' }, { status: 500 });
   }
 }
 
@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const { id, status } = await req.json();
     const result = await sql`
-      UPDATE requests SET status = ${status}, updated_at = CURRENT_TIMESTAMP 
+      UPDATE orders SET status = ${status}, updated_at = CURRENT_TIMESTAMP 
       WHERE id = ${id} RETURNING *
     `;
     return NextResponse.json(result[0]);
@@ -46,7 +46,7 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const { id } = await req.json();
-    await sql`DELETE FROM requests WHERE id = ${id}`;
+    await sql`DELETE FROM orders WHERE id = ${id}`;
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ message: 'Delete failed' }, { status: 500 });

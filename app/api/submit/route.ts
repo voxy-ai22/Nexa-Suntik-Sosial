@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql, initDb } from '@/lib/db';
 import { checkRateLimit } from '@/lib/ratelimit';
-import { generatePaymentRef } from '@/lib/payment';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +14,6 @@ export async function POST(req: NextRequest) {
     }
 
     const identifier = req.headers.get('x-forwarded-for')?.split(',')[0] || 'local-user';
-    const userId = `USER-${Math.floor(1000 + Math.random() * 9000)}`;
 
     if (serviceType === 'free') {
       const rateLimit = await checkRateLimit(identifier);
@@ -24,25 +22,25 @@ export async function POST(req: NextRequest) {
       }
 
       const result = await sql`
-        INSERT INTO requests (device_id, user_id, link_tiktok, jumlah_view, service_type, harga, identifier, status)
-        VALUES (${deviceId}, ${userId}, ${linkTikTok}, ${jumlahView}, 'free', 0, ${identifier}, 'PAID')
+        INSERT INTO orders (device_id, service_type, tiktok_link, views, status)
+        VALUES (${deviceId}, 'FREE', ${linkTikTok}, ${jumlahView}, 'processing')
         RETURNING *
       `;
       return NextResponse.json(result[0]);
     } else {
       if (!phoneNumber) return NextResponse.json({ message: 'Nomor HP wajib untuk Premium' }, { status: 400 });
       
-      const harga = Math.max(100, Math.floor((jumlahView / 1000) * 100));
-      const paymentRef = generatePaymentRef();
+      const expiredAt = new Date(Date.now() + 60 * 1000); // 60 detik
 
       const result = await sql`
-        INSERT INTO requests (device_id, user_id, link_tiktok, phone_number, jumlah_view, service_type, harga, identifier, status, payment_ref)
-        VALUES (${deviceId}, ${userId}, ${linkTikTok}, ${phoneNumber}, ${jumlahView}, 'premium', ${harga}, ${identifier}, 'WAITING_PAYMENT', ${paymentRef})
+        INSERT INTO orders (device_id, service_type, tiktok_link, phone_number, views, status, qris_expired_at)
+        VALUES (${deviceId}, 'PREMIUM', ${linkTikTok}, ${phoneNumber}, ${jumlahView}, 'pending_payment', ${expiredAt})
         RETURNING *
       `;
       return NextResponse.json(result[0]);
     }
   } catch (error: any) {
-    return NextResponse.json({ message: 'Gagal sistem' }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ message: 'Gagal memproses pesanan' }, { status: 500 });
   }
 }

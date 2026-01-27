@@ -18,26 +18,24 @@ export async function initDb() {
   
   try {
     await sql`
-      CREATE TABLE IF NOT EXISTS requests (
-        id SERIAL PRIMARY KEY,
+      CREATE TABLE IF NOT EXISTS orders (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         device_id TEXT NOT NULL,
-        user_id TEXT NOT NULL,
-        link_tiktok TEXT NOT NULL,
+        service_type TEXT NOT NULL, -- FREE, PREMIUM
+        tiktok_link TEXT NOT NULL,
+        views INTEGER NOT NULL,
         phone_number TEXT,
-        jumlah_view INTEGER NOT NULL,
-        service_type TEXT NOT NULL,
-        harga INTEGER NOT NULL,
-        identifier TEXT NOT NULL,
-        status TEXT NOT NULL, -- CREATED, WAITING_PAYMENT, USER_CONFIRM, PAID, REJECTED, EXPIRED
-        payment_ref TEXT,
-        proof_image TEXT,
+        status TEXT NOT NULL, -- pending_payment, waiting_admin, processing, success, failed
+        payment_proof_url TEXT,
+        qris_expired_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
     
-    await sql`CREATE INDEX IF NOT EXISTS idx_device ON requests(device_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_status_type ON requests(status, service_type)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_orders_device ON orders(device_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_orders_type ON orders(service_type)`;
   } catch (err) {
     console.error("Database initialization failed:", err);
   }

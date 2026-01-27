@@ -5,23 +5,25 @@ export async function POST(req: NextRequest) {
   try {
     const { orderId, proofImage } = await req.json();
 
-    if (!orderId) return NextResponse.json({ message: 'ID Order diperlukan' }, { status: 400 });
+    if (!orderId || !proofImage) {
+      return NextResponse.json({ message: 'Bukti pembayaran wajib diunggah' }, { status: 400 });
+    }
 
     const result = await sql`
-      UPDATE requests 
-      SET status = 'USER_CONFIRM', 
-          proof_image = ${proofImage || null},
+      UPDATE orders 
+      SET status = 'waiting_admin', 
+          payment_proof_url = ${proofImage},
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${orderId} AND status = 'WAITING_PAYMENT'
+      WHERE id = ${orderId} AND status = 'pending_payment'
       RETURNING *
     `;
 
     if (result.length === 0) {
-      return NextResponse.json({ message: 'Order tidak ditemukan atau sudah dikonfirmasi' }, { status: 404 });
+      return NextResponse.json({ message: 'Order tidak ditemukan atau sudah diproses' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, order: result[0] });
   } catch (error) {
-    return NextResponse.json({ message: 'Gagal konfirmasi' }, { status: 500 });
+    return NextResponse.json({ message: 'Gagal mengunggah bukti' }, { status: 500 });
   }
 }

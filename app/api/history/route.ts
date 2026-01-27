@@ -11,8 +11,8 @@ export async function GET(req: NextRequest) {
     if (!deviceId) return NextResponse.json([], { status: 200 });
 
     const data = await sql`
-      SELECT id, jumlah_view, service_type, status, created_at 
-      FROM requests 
+      SELECT id, views as jumlah_view, service_type, status, created_at 
+      FROM orders 
       WHERE device_id = ${deviceId} 
       ORDER BY created_at DESC 
       LIMIT 10
