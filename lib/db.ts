@@ -1,10 +1,7 @@
-
 import postgres from 'postgres';
 
-const connectionString = process.env.DATA_BASE;
+const connectionString = process.env.DATA_BASE || process.env.DATABASE_URL;
 
-// Gunakan global agar koneksi tidak dibuat berulang kali saat hot-reload
-// Fix: Use globalThis instead of global to avoid 'Cannot find name global' error in TypeScript
 const globalForSql = globalThis as unknown as { sql: any };
 
 export const sql = globalForSql.sql || (connectionString ? postgres(connectionString, {
@@ -17,12 +14,10 @@ export const sql = globalForSql.sql || (connectionString ? postgres(connectionSt
 if (process.env.NODE_ENV !== 'production') globalForSql.sql = sql;
 
 export async function initDb() {
-  if (!sql) {
-    console.warn("Database connection string is missing.");
-    return;
-  }
+  if (!sql) return;
   
   try {
+    // Schema update
     await sql`
       CREATE TABLE IF NOT EXISTS requests (
         id SERIAL PRIMARY KEY,
@@ -32,15 +27,16 @@ export async function initDb() {
         service_type TEXT NOT NULL,
         harga INTEGER NOT NULL,
         identifier TEXT NOT NULL,
-        status TEXT NOT NULL,
+        status TEXT NOT NULL, -- CREATED, WAITING_PAYMENT, USER_CONFIRM, PAID, REJECTED
         payment_ref TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        proof_image TEXT, -- Base64 or URL
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
-
-    await sql`CREATE INDEX IF NOT EXISTS idx_identifier ON requests(identifier)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_created_at ON requests(created_at)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_service_type ON requests(service_type)`;
+    
+    await sql`CREATE INDEX IF NOT EXISTS idx_status ON requests(status)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_identifier_service ON requests(identifier, service_type)`;
   } catch (err) {
     console.error("Database initialization failed:", err);
   }
