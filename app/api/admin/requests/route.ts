@@ -1,7 +1,8 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { verifyAdminKey } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const adminKey = req.headers.get('authorization');
@@ -11,6 +12,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    if (!sql) return NextResponse.json({ message: 'DB not connected' }, { status: 500 });
     const data = await sql`SELECT * FROM requests ORDER BY created_at DESC`;
     return NextResponse.json(data);
   } catch (error) {
@@ -25,6 +27,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
+    if (!sql) return NextResponse.json({ message: 'DB not connected' }, { status: 500 });
     const { id, status } = await req.json();
     const result = await sql`
       UPDATE requests 
