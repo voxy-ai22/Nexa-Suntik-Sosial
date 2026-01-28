@@ -1,3 +1,4 @@
+
 import postgres from 'postgres';
 
 const connectionString = process.env.DATABASE_URL || process.env.DATA_BASE;
@@ -6,7 +7,7 @@ const globalForSql = globalThis as unknown as { sql: any };
 
 export const sql = globalForSql.sql || (connectionString ? postgres(connectionString, {
   ssl: 'require',
-  max: 5, // Batasi koneksi lebih ketat untuk stabilitas
+  max: 5,
   idle_timeout: 10,
   connect_timeout: 15,
 }) : null);
@@ -17,7 +18,7 @@ export async function initDb() {
   if (!sql) return;
   
   try {
-    // Tabel Orders - Memastikan skema sinkron
+    // Tabel Orders
     await sql`
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -45,6 +46,16 @@ export async function initDb() {
         body TEXT NOT NULL,
         status TEXT DEFAULT 'Waiting User', 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Tabel IP Rate Limits (Spam Protection)
+    await sql`
+      CREATE TABLE IF NOT EXISTS ip_rate_limits (
+        ip TEXT PRIMARY KEY,
+        attempts INTEGER DEFAULT 1,
+        blocked_until TIMESTAMP,
+        last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
     

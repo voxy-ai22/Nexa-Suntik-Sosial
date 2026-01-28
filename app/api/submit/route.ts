@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { sql, initDb } from '@/lib/db';
 import { checkRateLimit } from '@/lib/ratelimit';
@@ -13,15 +14,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Data tidak lengkap' }, { status: 400 });
     }
 
+    // Get client IP for spam protection
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+
     if (serviceType.toUpperCase() === 'FREE') {
       // FREE service is locked to exactly 1,000 views
       const fixedFreeViews = 1000;
       
-      // Enforce 25-hour rate limit lock
-      const rateLimit = await checkRateLimit(deviceId);
+      // Enforce 24-hour rate limit lock and spam protection
+      const rateLimit = await checkRateLimit(deviceId, ip);
       if (!rateLimit.allowed) {
         return NextResponse.json({ 
-          message: `Limit tercapai. Sisa waktu: ${rateLimit.waitTimeHours} jam.` 
+          message: rateLimit.message 
         }, { status: 429 });
       }
 
