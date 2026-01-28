@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Rocket, CheckCircle2, AlertCircle, ShieldCheck, 
   Zap, TrendingUp, Loader2, Camera, Phone, History, Clock, XCircle,
-  MessageCircle, Mail, Send, FileText, ChevronRight, Info
+  MessageCircle, Mail, Send, FileText, ChevronRight, Info, Copy, User
 } from 'lucide-react';
 import { QRIS_IMAGE_URL } from '@/lib/payment';
 
@@ -109,6 +109,11 @@ export default function Home() {
     };
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert('ID berhasil disalin!');
+  };
+
   return (
     <main className="min-h-screen bg-[#fcfdfe] text-slate-900 pb-20 selection:bg-blue-100 font-sans">
       <nav className="bg-white/80 backdrop-blur-2xl sticky top-0 z-50 border-b border-slate-100 px-6 py-5">
@@ -183,12 +188,32 @@ export default function Home() {
             <AnimatePresence mode="wait">
               {!orderResult ? (
                 <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-6"><History className="text-blue-600" /><h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">My History</h3></div>
+                  <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <History className="text-blue-600" />
+                      <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">My History</h3>
+                    </div>
+                    <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 text-right cursor-pointer hover:bg-white transition-all group" onClick={() => copyToClipboard(deviceId)}>
+                      <div className="text-[8px] font-black text-slate-300 uppercase tracking-widest flex items-center justify-end gap-1">User ID <Copy className="w-2 h-2" /></div>
+                      <div className="text-[10px] font-bold text-slate-700 group-hover:text-blue-600">{deviceId}</div>
+                    </div>
+                  </div>
+                  
                   <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                     {userHistory.map((h) => (
-                      <div key={h.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex justify-between items-center hover:shadow-md transition-all">
-                        <div className="min-w-0"><div className="text-[9px] font-black text-blue-600 uppercase mb-1 tracking-widest">{h.service_type}</div><div className="text-sm font-black text-slate-800 truncate">{h.jumlah_view.toLocaleString()} Views</div><div className="text-[10px] text-slate-300 font-bold mt-1">{new Date(h.created_at).toLocaleDateString()}</div></div>
-                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest ${h.status === 'success' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>{h.status.replace('_', ' ')}</div>
+                      <div key={h.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex justify-between items-center hover:shadow-md transition-all group">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{h.service_type}</div>
+                            <div className="text-[9px] font-bold text-slate-300 flex items-center gap-1">#{h.id.substring(0, 8).toUpperCase()}</div>
+                          </div>
+                          <div className="text-sm font-black text-slate-800 truncate">{h.jumlah_view.toLocaleString()} Views</div>
+                          <div className="text-[10px] text-slate-400 font-bold mt-1">{new Date(h.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                           <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest ${h.status === 'success' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>{h.status.replace('_', ' ')}</div>
+                           <button onClick={() => copyToClipboard(h.id)} className="text-[8px] font-black text-slate-300 hover:text-blue-600 uppercase tracking-widest flex items-center gap-1">Copy Order ID</button>
+                        </div>
                       </div>
                     ))}
                     {userHistory.length === 0 && <p className="text-slate-300 font-bold text-xs uppercase text-center py-10">No orders yet.</p>}
@@ -196,6 +221,11 @@ export default function Home() {
                 </div>
               ) : (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white p-12 rounded-[48px] shadow-2xl border border-slate-100 text-center space-y-10">
+                  <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 inline-block mb-4">
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mr-2">Order ID:</span>
+                    <span className="text-[10px] font-bold text-slate-800">#{orderResult.id.substring(0, 8).toUpperCase()}</span>
+                  </div>
+
                   {orderResult.status === 'failed' ? (
                      <div className="space-y-8"><XCircle className="w-20 h-20 text-red-500 mx-auto" /><h3 className="text-3xl font-black uppercase">EXPIRED</h3><button onClick={() => setOrderResult(null)} className="w-full bg-slate-900 text-white py-5 rounded-[24px] font-black uppercase">Ulangi</button></div>
                   ) : orderResult.status === 'waiting_admin' ? (
@@ -232,10 +262,13 @@ export default function Home() {
                 <div className="bg-blue-600 w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl shadow-blue-100"><Mail className="w-7 h-7" /></div>
                 <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Nexa Support</h3>
                 <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Layanan Bantuan & Refund Otomatis</p>
+                <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Your ID: <span className="text-blue-600">{deviceId}</span></p>
+                </div>
               </div>
               <form onSubmit={handleSupportSubmit} className="space-y-6">
                  <input type="email" required placeholder="Email Anda (Gunakan yang aktif)" className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl outline-none text-xs font-bold" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} />
-                 <input type="text" placeholder="Order ID (Jika ada)" className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl outline-none text-xs font-bold" value={supportOrderId} onChange={(e) => setSupportOrderId(setSupportOrderId(e.target.value))} />
+                 <input type="text" placeholder="Order ID (Jika ada)" className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl outline-none text-xs font-bold" value={supportOrderId} onChange={(e) => setSupportOrderId(e.target.value)} />
                  <textarea required rows={4} placeholder="Jelaskan kendala Anda..." className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl outline-none text-xs font-bold resize-none" value={supportMessage} onChange={(e) => setSupportMessage(e.target.value)}></textarea>
                  <button type="submit" disabled={supportLoading} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-all">
                    {supportLoading ? <Loader2 className="animate-spin" /> : <><Send className="w-5 h-5" /> Kirim Bantuan</>}
