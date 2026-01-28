@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, LogOut, CheckCircle2, XCircle, 
   RefreshCcw, Phone, Trash2, Clock, Home as HomeIcon,
-  Mail, MessageSquare, AlertCircle, Search
+  Mail, MessageSquare, AlertCircle, Search, User, Copy
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -50,6 +50,10 @@ export default function AdminDashboard() {
     } catch (e) {}
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-sm">
@@ -82,21 +86,33 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-4">
               {orders.map((order) => (
-                <div key={order.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center justify-between">
+                <div key={order.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center justify-between hover:border-blue-200 transition-all">
                    <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-black text-blue-600 uppercase bg-blue-50 px-2 py-0.5 rounded-md">{order.service_type}</span>
-                        <span className="text-xs font-bold text-slate-800">#{order.id.substring(0,8)}</span>
+                        <span className="text-xs font-bold text-slate-800">#{order.id.substring(0,8).toUpperCase()}</span>
                       </div>
-                      <p className="text-sm font-bold text-slate-500 truncate max-w-xs">{order.tiktok_link}</p>
+                      <p className="text-sm font-bold text-slate-500 truncate max-w-xs italic">{order.tiktok_link}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                         <User className="w-3 h-3 text-slate-300" />
+                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">User ID:</span>
+                         <span className="text-[10px] font-bold text-slate-600">{order.device_id}</span>
+                         <button onClick={() => copyToClipboard(order.device_id)} className="text-blue-500"><Copy className="w-3 h-3" /></button>
+                      </div>
                    </div>
-                   <div className="text-center">
-                      <p className="text-xl font-black text-slate-900">{order.views.toLocaleString()}</p>
-                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Views</p>
+                   <div className="text-center bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100">
+                      <p className="text-xl font-black text-slate-900 leading-none">{order.views.toLocaleString()}</p>
+                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Views</p>
                    </div>
-                   <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border ${order.status === 'success' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>{order.status}</div>
+                   <div className="flex flex-col items-end gap-2">
+                      <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border tracking-widest ${order.status === 'success' ? 'bg-green-50 text-green-600' : order.status === 'waiting_admin' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-400'}`}>{order.status.replace('_', ' ')}</div>
+                      <p className="text-[9px] text-slate-300 font-bold">{new Date(order.created_at).toLocaleString()}</p>
+                   </div>
                 </div>
               ))}
+              {orders.length === 0 && (
+                 <div className="py-20 text-center text-slate-300 uppercase font-black tracking-widest text-xs">No orders found</div>
+              )}
             </div>
           </>
         ) : (
@@ -118,7 +134,7 @@ export default function AdminDashboard() {
                     <select 
                       value={log.status} 
                       onChange={(e) => updateSupportStatus(log.id, e.target.value)}
-                      className="text-[9px] font-black uppercase bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none"
+                      className="text-[9px] font-black uppercase bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none shadow-sm cursor-pointer"
                     >
                       <option>Waiting User</option>
                       <option>Data Complete</option>
@@ -126,7 +142,13 @@ export default function AdminDashboard() {
                       <option>Resolved</option>
                     </select>
                   </div>
-                  <p className="text-xs font-black text-slate-800 mb-2 uppercase tracking-tight">{log.subject}</p>
+                  <div className="flex items-center gap-2 mb-2">
+                     <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Subject:</p>
+                     <p className="text-xs font-black text-slate-800 uppercase tracking-tight">{log.subject}</p>
+                  </div>
+                  {log.order_id && (
+                     <div className="mb-2 text-[9px] font-bold text-slate-400 uppercase italic">Linked Order: #{log.order_id.substring(0,8).toUpperCase()}</div>
+                  )}
                   <div className="bg-white/50 p-4 rounded-2xl border border-slate-100 text-xs text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">
                     {log.body}
                   </div>

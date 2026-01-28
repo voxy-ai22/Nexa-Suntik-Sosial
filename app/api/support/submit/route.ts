@@ -17,12 +17,21 @@ export async function POST(req: NextRequest) {
       VALUES (${orderId || null}, ${email}, 'incoming', 'Support Request', ${message}, 'Waiting User')
     `;
 
-    // 2. Setup Transporter (Gunakan ENV untuk keamanan)
+    // 2. Setup Transporter
+    const smtpPass = process.env.SMTP_PASS;
+    if (!smtpPass) {
+      console.warn("SMTP_PASS not configured. Logging support request without sending email.");
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Laporan dicatat secara internal. Admin akan segera memproses.' 
+      });
+    }
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: 'nexastore34@gmail.com',
-        pass: process.env.SMTP_PASS, // Gunakan App Password Gmail
+        pass: smtpPass,
       },
     });
 
@@ -40,18 +49,22 @@ Hormat kami,
 Nexa Support Team`;
 
     // 3. Kirim Auto-Reply
-    await transporter.sendMail({
-      from: '"Nexa Support" <nexastore34@gmail.com>',
-      to: email,
-      subject: subjectReply,
-      text: bodyReply,
-    });
+    try {
+      await transporter.sendMail({
+        from: '"Nexa Support" <nexastore34@gmail.com>',
+        to: email,
+        subject: subjectReply,
+        text: bodyReply,
+      });
 
-    // 4. Log Auto-Reply ke DB
-    await sql`
-      INSERT INTO support_email_logs (order_id, email_user, direction, subject, body)
-      VALUES (${orderId || null}, ${email}, 'outgoing', ${subjectReply}, ${bodyReply})
-    `;
+      // 4. Log Auto-Reply ke DB hanya jika berhasil terkirim
+      await sql`
+        INSERT INTO support_email_logs (order_id, email_user, direction, subject, body)
+        VALUES (${orderId || null}, ${email}, 'outgoing', ${subjectReply}, ${bodyReply})
+      `;
+    } catch (mailError) {
+      console.error("Failed to send support auto-reply email:", mailError);
+    }
 
     return NextResponse.json({ success: true, message: 'Support request sent. Please check your email.' });
   } catch (error: any) {
