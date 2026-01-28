@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LayoutDashboard, LogOut, Home as HomeIcon,
-  Mail, MessageSquare, User, Copy, ShieldCheck, CheckCircle, Loader2, RefreshCw
+  Mail, MessageSquare, User, Copy, ShieldCheck, CheckCircle, Loader2, RefreshCw, BellRing
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -12,11 +12,14 @@ export default function AdminDashboard() {
   const [supportLogs, setSupportLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasNewData, setHasNewData] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'ORDERS' | 'SUPPORT'>('ORDERS');
   const [filter, setFilter] = useState<'ALL' | 'FREE' | 'PREMIUM'>('ALL');
+  
   const router = useRouter();
   const refreshInterval = useRef<any>(null);
+  const prevDataCount = useRef<number>(0);
 
   const fetchData = useCallback(async (isBackground = false) => {
     if (!isBackground) setLoading(true);
@@ -27,6 +30,14 @@ export default function AdminDashboard() {
         const res = await fetch(`/api/admin/requests?type=${filter}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
+          
+          // Detect if new orders arrived
+          if (isBackground && data.length > prevDataCount.current) {
+            setHasNewData(true);
+            setTimeout(() => setHasNewData(false), 5000); // Reset alert after 5s
+          }
+          
+          prevDataCount.current = data.length;
           setOrders(data);
         }
       } else {
@@ -38,7 +49,7 @@ export default function AdminDashboard() {
       }
       setLastUpdated(new Date().toLocaleTimeString('id-ID'));
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error('Sync error:', err);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -46,10 +57,9 @@ export default function AdminDashboard() {
   }, [activeTab, filter]);
 
   useEffect(() => {
-    // Initial fetch
     fetchData();
 
-    // High frequency polling (5 seconds) for real-time experience
+    // High frequency 5s polling
     refreshInterval.current = setInterval(() => {
       fetchData(true);
     }, 5000);
@@ -72,24 +82,26 @@ export default function AdminDashboard() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('ID disalin ke clipboard');
+    // Simple non-intrusive alert logic could be added here
   };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-blue-100">
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-6 py-3 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-100">
-            <ShieldCheck className="w-5 h-5 text-white" />
+          <div className={`p-2 rounded-xl shadow-lg transition-all duration-500 ${hasNewData ? 'bg-green-500 shadow-green-200 scale-110' : 'bg-blue-600 shadow-blue-100'}`}>
+            {hasNewData ? <BellRing className="w-5 h-5 text-white animate-bounce" /> : <ShieldCheck className="w-5 h-5 text-white" />}
           </div>
           <div>
             <h1 className="text-[11px] font-black tracking-tighter uppercase leading-none">NEXA COMMAND CENTER</h1>
             <div className="flex items-center gap-2 mt-1">
               <div className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${hasNewData ? 'animate-ping bg-green-400' : 'bg-blue-400'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${hasNewData ? 'bg-green-500' : 'bg-blue-500'}`}></span>
               </div>
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Live Monitoring • {lastUpdated}</span>
+              <span className={`text-[8px] font-black uppercase tracking-widest transition-colors duration-500 ${hasNewData ? 'text-green-600' : 'text-slate-400'}`}>
+                {hasNewData ? 'New Activity Detected' : `Live Monitoring • ${lastUpdated}`}
+              </span>
             </div>
           </div>
         </div>
