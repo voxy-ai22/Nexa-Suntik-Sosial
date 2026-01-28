@@ -1,19 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Dimatikan sementara untuk mengurangi double render yang memakan RAM saat dev/build
   swcMinify: true,
   experimental: {
-    // Memberitahu Next.js untuk tidak mem-bundle nodemailer
-    serverComponentsExternalPackages: ['nodemailer'],
+    serverComponentsExternalPackages: ['nodemailer', 'postgres'],
   },
   webpack: (config, { isServer }) => {
-    // Tambahan untuk memastikan build server-side aman
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         net: false,
         tls: false,
         fs: false,
+        dns: false,
         child_process: false,
       };
     }
