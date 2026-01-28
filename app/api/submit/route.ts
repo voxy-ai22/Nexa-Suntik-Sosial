@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql, initDb } from '@/lib/db';
 import { checkRateLimit } from '@/lib/ratelimit';
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Nomor WhatsApp wajib untuk Premium' }, { status: 400 });
       }
       
-      // Premium max 200k
+      // Premium limit: 1.000 - 200.000 views
       if (jumlahView > 200000 || jumlahView < 1000) {
         return NextResponse.json({ message: 'Premium: 1.000 - 200.000 views' }, { status: 400 });
       }
