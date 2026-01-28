@@ -6,7 +6,17 @@ export async function POST(req: NextRequest) {
     const { orderId, proofImage } = await req.json();
 
     if (!orderId || !proofImage) {
-      return NextResponse.json({ message: 'Bukti pembayaran wajib diunggah' }, { status: 400 });
+      return NextResponse.json({ message: 'Bukti pembayaran dan ID Order wajib ada' }, { status: 400 });
+    }
+
+    // Verify if order exists and is in correct state
+    const currentOrder = await sql`SELECT status FROM orders WHERE id = ${orderId}`;
+    if (currentOrder.length === 0) {
+      return NextResponse.json({ message: 'Order tidak ditemukan' }, { status: 404 });
+    }
+
+    if (currentOrder[0].status !== 'pending_payment') {
+      return NextResponse.json({ message: 'Order ini tidak dalam status menunggu pembayaran' }, { status: 400 });
     }
 
     const result = await sql`
@@ -14,16 +24,13 @@ export async function POST(req: NextRequest) {
       SET status = 'waiting_admin', 
           payment_proof_url = ${proofImage},
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${orderId} AND status = 'pending_payment'
+      WHERE id = ${orderId}
       RETURNING *
     `;
 
-    if (result.length === 0) {
-      return NextResponse.json({ message: 'Order tidak ditemukan atau sudah diproses' }, { status: 404 });
-    }
-
     return NextResponse.json({ success: true, order: result[0] });
   } catch (error) {
-    return NextResponse.json({ message: 'Gagal mengunggah bukti' }, { status: 500 });
+    console.error("Confirm Proof Error:", error);
+    return NextResponse.json({ message: 'Gagal memproses unggahan bukti' }, { status: 500 });
   }
 }

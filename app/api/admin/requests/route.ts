@@ -13,9 +13,9 @@ export async function GET(req: NextRequest) {
 
     let data;
     if (type === 'ALL') {
-      data = await sql`SELECT * FROM orders ORDER BY created_at DESC`;
+      data = await sql`SELECT * FROM orders ORDER BY created_at DESC LIMIT 200`;
     } else {
-      data = await sql`SELECT * FROM orders WHERE service_type = ${type} ORDER BY created_at DESC`;
+      data = await sql`SELECT * FROM orders WHERE service_type = ${type} ORDER BY created_at DESC LIMIT 200`;
     }
     
     return NextResponse.json(data);

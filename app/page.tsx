@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Rocket, CheckCircle2, Loader2, History, MessageCircle, Send, 
   FileText, ShieldCheck, Menu, X, ChevronRight, Clock, 
-  ShieldAlert, Info, Image as ImageIcon, Upload
+  ImageIcon, AlertCircle, HelpCircle, ShieldAlert, RefreshCw, Info
 } from 'lucide-react';
 import { QRIS_IMAGE_URL } from '@/lib/payment';
 
@@ -79,12 +79,16 @@ export default function Home() {
         body: JSON.stringify({ email: supportEmail, orderId: supportOrderId, message: supportMessage })
       });
       if (res.ok) {
-        alert('Laporan terkirim. Cek email Anda untuk konfirmasi bantuan otomatis.');
+        alert('Laporan terkirim! Sistem otomatis kami telah mengirimkan email instruksi. Silakan cek Inbox/Spam email Anda dan balas dengan data yang diminta.');
         setShowSupport(false);
         setSupportMessage('');
+        setSupportOrderId('');
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Gagal mengirim laporan');
       }
     } catch (e) {
-      alert('Gagal mengirim bantuan');
+      alert('Gagal mengirim laporan');
     } finally {
       setSupportLoading(false);
     }
@@ -157,20 +161,6 @@ export default function Home() {
     } finally {
       setUploadingProof(false);
     }
-  };
-
-  const checkPayment = async () => {
-    if (!orderResult?.id) return;
-    try {
-      const res = await fetch(`/api/payment/check?id=${orderResult.id}`);
-      const data = await res.json();
-      if (data.status === 'processing' || data.status === 'success') {
-        setOrderResult({ ...orderResult, status: data.status });
-        fetchHistory(deviceId);
-      } else if (data.status === 'waiting_admin') {
-         setOrderResult({ ...orderResult, status: 'waiting_admin' });
-      }
-    } catch (e) {}
   };
 
   return (
@@ -246,7 +236,7 @@ export default function Home() {
                   {serviceType === 'PREMIUM' && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-primary-400 ml-1">Nomor WhatsApp</label>
+                        <label className="text-[10px] font-black uppercase text-primary-400 ml-1">Nomor WhatsApp Aktif</label>
                         <input type="tel" placeholder="08..." className="input-field py-4" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
                       </div>
                       <div className="space-y-4 bg-primary-50/50 p-6 rounded-2xl border border-primary-100">
@@ -306,7 +296,7 @@ export default function Home() {
                      <div className="text-center space-y-8">
                         <div className="bg-green-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-xl"><CheckCircle2 className="text-white w-10 h-10" /></div>
                         <h3 className="text-2xl font-black italic uppercase">PESANAN DIPROSES!</h3>
-                        <p className="text-primary-400 text-sm">Terima kasih. Views akan masuk setelah verifikasi Admin selesai.</p>
+                        <p className="text-primary-400 text-sm">Terima kasih. Views akan masuk dalam estimasi 1x24 jam. Cek status di Riwayat Pesanan.</p>
                         <button onClick={() => setOrderResult(null)} className="w-full py-4 border-2 border-primary-100 rounded-xl text-primary-400 font-black italic hover:bg-primary-50 transition-all uppercase">Buat Pesanan Baru</button>
                      </div>
                    )}
@@ -339,15 +329,143 @@ export default function Home() {
             <div className="bg-primary-900 p-8 rounded-[32px] text-white space-y-4 relative overflow-hidden shadow-2xl">
                <ShieldCheck className="absolute top-0 right-0 p-4 opacity-10 w-24 h-24" />
                <h4 className="text-lg font-black italic leading-tight uppercase">BUTUH BANTUAN?</h4>
-               <p className="text-primary-300 text-xs leading-relaxed font-medium">Tim kami siap membantu kendala pembayaran 24/7.</p>
+               <p className="text-primary-300 text-xs leading-relaxed font-medium">Batas proses 1x24 jam. Gunakan form support jika pesanan melebihi batas waktu.</p>
                <button onClick={() => setShowSupport(true)} className="flex items-center gap-2 bg-white text-primary-900 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-tight hover:bg-primary-100 transition-all">HUBUNGI SUPPORT <ChevronRight className="w-3 h-3" /></button>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Support & Doc Modals omitted for brevity but they are kept in full version */}
-      {/* ... (ShowSupport & ShowDoc code remains as in previous turn) ... */}
+      <footer className="max-w-6xl mx-auto px-6 py-12 border-t border-primary-100 mt-20">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+          <div className="flex items-center gap-2 grayscale opacity-50 justify-center md:justify-start">
+            <div className="bg-primary-900 p-1.5 rounded-lg"><Rocket className="text-white w-4 h-4" /></div>
+            <h1 className="font-black text-sm tracking-tighter italic">NEXA SOSIAL</h1>
+          </div>
+          <div className="flex gap-10 text-[10px] font-black text-primary-300 uppercase tracking-widest justify-center">
+            <button onClick={() => setShowDoc(true)} className="hover:text-primary-600 transition-colors">TOS</button>
+            <button onClick={() => setShowDoc(true)} className="hover:text-primary-600 transition-colors">PRIVACY</button>
+            <button onClick={() => setShowSupport(true)} className="hover:text-primary-600 transition-colors">REFUND</button>
+          </div>
+          <p className="text-[10px] font-medium text-primary-200 uppercase tracking-widest">© 2024 NEXA. ALL RIGHTS RESERVED.</p>
+        </div>
+      </footer>
+
+      {/* Support Dialog */}
+      <AnimatePresence>
+        {showSupport && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSupport(false)} className="absolute inset-0 bg-primary-900/40 backdrop-blur-sm" />
+             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-md p-8 rounded-[32px] shadow-2xl relative z-10 border border-primary-100">
+                <button onClick={() => setShowSupport(false)} className="absolute top-6 right-6 p-2 text-primary-200 hover:text-primary-400 transition-all"><X /></button>
+                <div className="text-center space-y-2 mb-8">
+                   <div className="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-primary-600"><MessageCircle className="w-6 h-6" /></div>
+                   <h3 className="text-xl font-black italic">HUBUNGI KAMI</h3>
+                   <p className="text-[10px] text-primary-400 leading-relaxed font-bold italic uppercase">Pesan akan diproses sistem internal Nexa (Admin tidak melihat chat langsung).</p>
+                </div>
+                <form onSubmit={handleSupportSubmit} className="space-y-4">
+                   <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-primary-400 ml-1">Email Anda</label>
+                      <input type="email" placeholder="email@anda.com" className="input-field" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} required />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-primary-400 ml-1">ID Order (Opsional)</label>
+                      <input type="text" placeholder="NEXA-XXXX" className="input-field" value={supportOrderId} onChange={(e) => setSupportOrderId(e.target.value)} />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-primary-400 ml-1">Pesan Keluhan</label>
+                      <textarea placeholder="Ceritakan kendala Anda..." className="input-field min-h-[120px] py-3 resize-none" value={supportMessage} onChange={(e) => setSupportMessage(e.target.value)} required />
+                   </div>
+                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4">
+                      <p className="text-[9px] text-blue-600 font-bold leading-relaxed italic">
+                        *Sistem akan mengirim email konfirmasi. Balas email tersebut dengan bukti transfer, nomor WA, ID Pesanan, dan Link TikTok agar diproses segera.
+                      </p>
+                   </div>
+                   <button type="submit" disabled={supportLoading} className="w-full btn-primary py-4 rounded-2xl flex items-center justify-center gap-2 uppercase tracking-widest text-xs font-black">
+                     {supportLoading ? <Loader2 className="animate-spin w-5 h-5" /> : <>KIRIM LAPORAN <Send className="w-4 h-4" /></>}
+                   </button>
+                </form>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Doc Dialog (Updated with full Procedures) */}
+      <AnimatePresence>
+        {showDoc && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowDoc(false)} className="absolute inset-0 bg-primary-900/40 backdrop-blur-sm" />
+             <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="bg-white w-full max-w-2xl max-h-[85vh] overflow-y-auto p-10 rounded-[40px] shadow-2xl relative z-10 border border-primary-100 custom-scrollbar">
+                <button onClick={() => setShowDoc(false)} className="absolute top-8 right-8 p-2 text-primary-200 hover:text-primary-400 transition-all"><X /></button>
+                <div className="prose prose-primary max-w-none space-y-10">
+                   <div className="text-center border-b border-primary-50 pb-8">
+                      <FileText className="w-12 h-12 text-primary-200 mx-auto mb-4" />
+                      <h2 className="text-3xl font-black italic m-0 tracking-tighter uppercase">PROSEDUR & DUKUNGAN</h2>
+                   </div>
+                   
+                   <section className="space-y-6">
+                      <div className="flex items-center gap-3 text-primary-600">
+                         <Clock className="w-5 h-5" />
+                         <h4 className="text-sm font-black italic uppercase tracking-widest m-0">Estimasi Waktu Layanan (SLA)</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="bg-primary-50 p-4 rounded-2xl border border-primary-100">
+                            <p className="text-[10px] font-black text-primary-400 uppercase mb-1">FREE SERVICE</p>
+                            <p className="text-xs font-bold text-primary-700">Maksimal 1 x 24 Jam</p>
+                         </div>
+                         <div className="bg-primary-50 p-4 rounded-2xl border border-primary-100">
+                            <p className="text-[10px] font-black text-primary-400 uppercase mb-1">PREMIUM SERVICE</p>
+                            <p className="text-xs font-bold text-primary-700">Maksimal 1 x 24 Jam</p>
+                         </div>
+                      </div>
+                      <p className="text-[11px] text-primary-400 leading-relaxed font-medium italic">*Selama masih dalam batas waktu 24 jam, pengguna tidak perlu menghubungi admin.</p>
+                   </section>
+
+                   <section className="space-y-6">
+                      <div className="flex items-center gap-3 text-primary-600">
+                         <ShieldAlert className="w-5 h-5" />
+                         <h4 className="text-sm font-black italic uppercase tracking-widest m-0">Kebijakan Pengembalian Dana (Refund)</h4>
+                      </div>
+                      <div className="bg-red-50 p-6 rounded-3xl border border-red-100 space-y-3">
+                         <p className="text-xs font-bold text-red-600 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-red-600 rounded-full" /> Refund HANYA berlaku untuk layanan PREMIUM.</p>
+                         <p className="text-xs font-bold text-red-600 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-red-600 rounded-full" /> Syarat: Melebihi 24 jam sejak pembayaran dikonfirmasi.</p>
+                         <p className="text-xs font-bold text-red-600 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-red-600 rounded-full" /> Syarat: Mengirimkan data lengkap ke sistem support Nexa.</p>
+                         <p className="text-xs font-bold text-red-400 italic mt-4">*Layanan FREE tidak memiliki ketentuan refund dalam kondisi apa pun.</p>
+                      </div>
+                   </section>
+
+                   <section className="space-y-6">
+                      <div className="flex items-center gap-3 text-primary-600">
+                         <RefreshCw className="w-5 h-5" />
+                         <h4 className="text-sm font-black italic uppercase tracking-widest m-0">Ketentuan Refill</h4>
+                      </div>
+                      <ul className="grid grid-cols-1 md:grid-cols-3 gap-3 m-0 p-0 list-none">
+                         {['View TikTok: No Refill', 'Followers: No Refill', 'Likes: No Refill'].map(t => (
+                            <li key={t} className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-[10px] font-black text-slate-400 text-center uppercase">{t}</li>
+                         ))}
+                      </ul>
+                      <div className="bg-primary-50 p-4 rounded-2xl">
+                         <p className="text-[10px] font-black text-primary-400 uppercase mb-2">Update Terakhir Layanan:</p>
+                         <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-primary-600 flex justify-between"><span>TikTok View Refill 30h:</span> <span>05/02/2026</span></p>
+                            <p className="text-[10px] font-bold text-primary-600 flex justify-between"><span>TikTok Follower:</span> <span>10/02/2026</span></p>
+                            <p className="text-[10px] font-bold text-primary-600 flex justify-between"><span>TikTok Like:</span> <span>15/02/2026</span></p>
+                         </div>
+                      </div>
+                   </section>
+
+                   <section className="space-y-6">
+                      <div className="flex items-center gap-3 text-primary-600">
+                         <Info className="w-5 h-5" />
+                         <h4 className="text-sm font-black italic uppercase tracking-widest m-0">Pencegahan Penyalahgunaan</h4>
+                      </div>
+                      <p className="text-[11px] text-primary-400 leading-relaxed font-medium">Sistem support otomatis (Auto-reply) hanya dikirim 1 kali per ID pesanan. Nexa tidak merespons email tanpa data lengkap sesuai instruksi sistem.</p>
+                   </section>
+                </div>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
