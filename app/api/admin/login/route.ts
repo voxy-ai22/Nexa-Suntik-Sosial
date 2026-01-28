@@ -3,11 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const { key } = await req.json();
-    // Mendukung dua variasi nama environment variable untuk fleksibilitas
-    const ADMIN_KEY = process.env.API_ADMIN_KEY || process.env.KEY_ADMIN;
+    // Using strictly defined key from user instructions
+    const ADMIN_KEY = process.env.KEY_ADMIN;
 
     if (!ADMIN_KEY) {
-      console.error("Critical: Admin Key not found in Environment Variables.");
+      console.error("Critical: KEY_ADMIN not found in Environment Variables.");
       return NextResponse.json({ message: 'Configuration missing' }, { status: 500 });
     }
     
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         httpOnly: true,
         secure: true,
         sameSite: 'strict',
-        maxAge: 60 * 60 * 24, // 24 Jam
+        maxAge: 60 * 60 * 24, // 24 Hours
         path: '/',
       });
       return response;
