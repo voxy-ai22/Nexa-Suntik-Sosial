@@ -29,8 +29,7 @@ export default function Home() {
   const [supportMessage, setSupportMessage] = useState('');
   const [supportLoading, setSupportLoading] = useState(false);
 
-  // Updated pricing logic: 398 IDR per 1,000 views. 
-  // Max views updated to 200k.
+  // Pricing: 398 IDR per 1,000 views
   const price = useMemo(() => {
     if (serviceType === 'FREE') return 0;
     const unitsOf1k = Math.floor(jumlahView / 1000);
@@ -135,11 +134,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-primary-50 text-primary-900 font-sans selection:bg-primary-200">
+    <div className="min-h-screen bg-primary-50 text-primary-900 font-sans selection:bg-primary-200 overflow-x-hidden">
       {/* Navbar */}
       <nav className="bg-white/80 backdrop-blur-lg border-b border-primary-100 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
+          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
             <div className="bg-primary-500 p-2 rounded-xl group-hover:rotate-12 transition-transform">
               <Rocket className="text-white w-5 h-5" />
             </div>
@@ -149,21 +148,61 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8">
             <button onClick={() => setShowDoc(true)} className="text-sm font-bold text-primary-400 hover:text-primary-600 transition-colors">DOKUMENTASI</button>
             <button onClick={() => setShowSupport(true)} className="text-sm font-bold text-primary-400 hover:text-primary-600 transition-colors">SUPPORT</button>
-            <button className="bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary-100 transition-all active:scale-95">ORDER SEKARANG</button>
+            <button onClick={() => window.scrollTo({top: 400, behavior:'smooth'})} className="bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary-100 transition-all active:scale-95">ORDER SEKARANG</button>
           </div>
 
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X /> : <Menu />}
+          <button className="md:hidden p-2 text-primary-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 bg-primary-900/20 backdrop-blur-sm z-[55] md:hidden"
+            />
+            <motion.div 
+              initial={{ x: '100%' }} 
+              animate={{ x: 0 }} 
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-[80%] max-w-sm bg-white z-[60] shadow-2xl flex flex-col p-8 md:hidden"
+            >
+              <div className="flex justify-between items-center mb-12">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary-500 p-2 rounded-xl">
+                    <Rocket className="text-white w-5 h-5" />
+                  </div>
+                  <h1 className="font-black text-xl tracking-tighter italic">NEXA</h1>
+                </div>
+                <button onClick={() => setIsMenuOpen(false)} className="p-2"><X size={24} /></button>
+              </div>
+              <div className="flex flex-col gap-8">
+                <button onClick={() => { setIsMenuOpen(false); setShowDoc(true); }} className="text-left text-2xl font-black italic hover:text-primary-500 flex items-center justify-between">DOKUMENTASI <ChevronRight size={20} /></button>
+                <button onClick={() => { setIsMenuOpen(false); setShowSupport(true); }} className="text-left text-2xl font-black italic hover:text-primary-500 flex items-center justify-between">SUPPORT <ChevronRight size={20} /></button>
+                <button onClick={() => { setIsMenuOpen(false); window.scrollTo({top: 400, behavior: 'smooth'}); }} className="text-left text-2xl font-black italic hover:text-primary-500 flex items-center justify-between text-primary-600">ORDER SEKARANG <ChevronRight size={20} /></button>
+              </div>
+              <div className="mt-auto pt-8 border-t border-primary-100">
+                <p className="text-[10px] font-black text-primary-300 uppercase tracking-widest leading-relaxed italic">Boost Your TikTok Potential with Nexa Sosial Automations.</p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <main className="max-w-4xl mx-auto px-6 py-12">
         <header className="text-center mb-16 space-y-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-block bg-primary-100 text-primary-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
             #1 TikTok Booster Service
           </motion.div>
-          <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-5xl md:text-6xl font-black italic tracking-tighter">
+          <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-5xl md:text-6xl font-black italic tracking-tighter leading-tight">
             BOOST VIEWS <span className="text-primary-500">SEKETIKA.</span>
           </motion.h2>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-primary-400 font-medium max-w-lg mx-auto leading-relaxed">
@@ -263,7 +302,7 @@ export default function Home() {
                            <CheckCircle2 className="text-white w-10 h-10" />
                         </div>
                         <div>
-                           <h3 className="text-2xl font-black italic">PESANAN DIPROSES!</h3>
+                           <h3 className="text-2xl font-black italic uppercase tracking-tight">PESANAN DIPROSES!</h3>
                            <p className="text-primary-400 text-sm mt-2">Views akan masuk dalam hitungan menit. Terima kasih telah menggunakan Nexa.</p>
                         </div>
                         <div className="bg-primary-50 p-6 rounded-[24px] border border-primary-100 text-left space-y-3">
@@ -319,7 +358,7 @@ export default function Home() {
                <div className="absolute top-0 right-0 p-4 opacity-10">
                   <ShieldCheck className="w-24 h-24" />
                </div>
-               <h4 className="text-lg font-black italic leading-tight">BUTUH BANTUAN<br/>LEBIH LANJUT?</h4>
+               <h4 className="text-lg font-black italic leading-tight uppercase">BUTUH BANTUAN<br/>LEBIH LANJUT?</h4>
                <p className="text-primary-300 text-xs leading-relaxed font-medium">Tim kami siap membantu kendala pembayaran atau teknis 24/7 melalui pusat dukungan kami.</p>
                <button onClick={() => setShowSupport(true)} className="flex items-center gap-2 bg-white text-primary-900 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-tight hover:bg-primary-100 transition-all">
                  HUBUNGI SUPPORT <ChevronRight className="w-3 h-3" />
@@ -330,14 +369,14 @@ export default function Home() {
       </main>
 
       <footer className="max-w-6xl mx-auto px-6 py-12 border-t border-primary-100 mt-20">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2 grayscale opacity-50">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+          <div className="flex items-center gap-2 grayscale opacity-50 justify-center md:justify-start">
             <div className="bg-primary-900 p-1.5 rounded-lg">
               <Rocket className="text-white w-4 h-4" />
             </div>
             <h1 className="font-black text-sm tracking-tighter italic">NEXA SOSIAL</h1>
           </div>
-          <div className="flex gap-10 text-[10px] font-black text-primary-300 uppercase tracking-widest">
+          <div className="flex gap-10 text-[10px] font-black text-primary-300 uppercase tracking-widest justify-center">
             <button onClick={() => setShowDoc(true)} className="hover:text-primary-600 transition-colors">TOS</button>
             <button onClick={() => setShowDoc(true)} className="hover:text-primary-600 transition-colors">PRIVACY</button>
             <button onClick={() => setShowSupport(true)} className="hover:text-primary-600 transition-colors">REFUND</button>

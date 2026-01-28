@@ -40,12 +40,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Nomor WhatsApp wajib untuk Premium' }, { status: 400 });
       }
       
-      // Premium limit: 1.000 - 200.000 views
+      // Premium limit: 1.000 - 200.000 views (as requested)
       if (jumlahView > 200000 || jumlahView < 1000) {
         return NextResponse.json({ message: 'Premium: 1.000 - 200.000 views' }, { status: 400 });
       }
       
-      const expiredAt = new Date(Date.now() + 120 * 1000); // 2 mins for premium payment upload
+      const expiredAt = new Date(Date.now() + 120 * 1000); // 2 mins expiry
 
       const result = await sql`
         INSERT INTO orders (device_id, service_type, tiktok_link, phone_number, views, status, qris_expired_at)
