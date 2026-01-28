@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LayoutDashboard, LogOut, Home as HomeIcon,
   Mail, MessageSquare, User, Copy, ShieldCheck, CheckCircle, Loader2, RefreshCw, BellRing,
-  Trash2, Check, X, Clock, AlertCircle, ExternalLink
+  Trash2, Check, X, Clock, ExternalLink
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -64,6 +64,16 @@ export default function AdminDashboard() {
     };
   }, [fetchData]);
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      router.push('/admin/login');
+      router.refresh();
+    } catch (e) {
+      console.error("Logout failed", e);
+    }
+  };
+
   const updateOrderStatus = async (id: string, status: string) => {
     try {
       const res = await fetch('/api/admin/requests', {
@@ -72,13 +82,14 @@ export default function AdminDashboard() {
         body: JSON.stringify({ id, status })
       });
       if (res.ok) fetchData(true);
+      else alert("Gagal update status");
     } catch (e) {
-      alert("Failed to update status");
+      alert("Terjadi kesalahan sistem");
     }
   };
 
   const deleteOrder = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this order? This action cannot be undone.")) return;
+    if (!confirm("Hapus pesanan ini secara permanen?")) return;
     try {
       const res = await fetch('/api/admin/requests', {
         method: 'DELETE',
@@ -86,8 +97,9 @@ export default function AdminDashboard() {
         body: JSON.stringify({ id })
       });
       if (res.ok) fetchData(true);
+      else alert("Gagal menghapus");
     } catch (e) {
-      alert("Failed to delete order");
+      alert("Terjadi kesalahan sistem");
     }
   };
 
@@ -121,7 +133,7 @@ export default function AdminDashboard() {
                 <span className={`relative inline-flex rounded-full h-2 w-2 ${hasNewData ? 'bg-green-500' : 'bg-blue-500'}`}></span>
               </div>
               <span className={`text-[8px] font-black uppercase tracking-widest transition-colors duration-500 ${hasNewData ? 'text-green-600' : 'text-slate-400'}`}>
-                {hasNewData ? 'New Activity Detected' : `Live Monitoring • ${lastUpdated}`}
+                {hasNewData ? 'Aktivitas Baru' : `Live Monitoring • ${lastUpdated}`}
               </span>
             </div>
           </div>
@@ -139,7 +151,7 @@ export default function AdminDashboard() {
             <button onClick={() => router.push('/')} className="p-2.5 bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-xl transition-all border border-slate-200 group">
               <HomeIcon className="w-4 h-4" />
             </button>
-            <button onClick={() => { document.cookie = "admin_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; window.location.href = '/admin/login'; }} className="p-2.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-all border border-red-100">
+            <button onClick={handleLogout} className="p-2.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-all border border-red-100">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -153,7 +165,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-3xl font-black uppercase tracking-tight italic">Operations Queue</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Managing Global Traffic</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Order Management</p>
                   {isRefreshing && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
                 </div>
               </div>
@@ -194,7 +206,7 @@ export default function AdminDashboard() {
                            </div>
                            <div className="text-[9px] text-slate-300 font-bold uppercase tracking-tight">{new Date(order.created_at).toLocaleString('id-ID')}</div>
                            {order.payment_proof_url && (
-                             <a href={order.payment_proof_url} target="_blank" className="text-[9px] font-black text-amber-600 underline uppercase italic">View Proof</a>
+                             <a href={order.payment_proof_url} target="_blank" className="text-[9px] font-black text-amber-600 underline uppercase italic">Cek Bukti Transfer</a>
                            )}
                         </div>
                      </div>
@@ -215,19 +227,19 @@ export default function AdminDashboard() {
                              {order.status.replace('_', ' ')}
                            </div>
                            
-                           {/* Admin Actions */}
+                           {/* Quick Action Buttons */}
                            <div className="flex items-center gap-1.5 mt-2">
-                             <button onClick={() => updateOrderStatus(order.id, 'success')} title="Mark Success" className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all border border-green-200">
+                             <button onClick={() => updateOrderStatus(order.id, 'success')} title="Sukses" className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all border border-green-200">
                                <Check className="w-3.5 h-3.5" />
                              </button>
-                             <button onClick={() => updateOrderStatus(order.id, 'waiting_admin')} title="Set Pending/Waiting" className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-200">
+                             <button onClick={() => updateOrderStatus(order.id, 'waiting_admin')} title="Pending" className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-200">
                                <Clock className="w-3.5 h-3.5" />
                              </button>
-                             <button onClick={() => updateOrderStatus(order.id, 'failed')} title="Mark Failed" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-200">
+                             <button onClick={() => updateOrderStatus(order.id, 'failed')} title="Gagal" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-200">
                                <X className="w-3.5 h-3.5" />
                              </button>
                              <div className="w-px h-4 bg-slate-200 mx-1"></div>
-                             <button onClick={() => deleteOrder(order.id)} title="Delete/Clear Order" className="p-2 bg-slate-900 text-white rounded-lg hover:bg-red-600 transition-all">
+                             <button onClick={() => deleteOrder(order.id)} title="Hapus Permanen" className="p-2 bg-slate-900 text-white rounded-lg hover:bg-red-600 transition-all">
                                <Trash2 className="w-3.5 h-3.5" />
                              </button>
                            </div>
@@ -250,7 +262,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-3xl font-black uppercase tracking-tight italic">Support Tickets</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Conversations & Refund Claims</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Support Logs</p>
                   {isRefreshing && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
                 </div>
               </div>
@@ -268,7 +280,7 @@ export default function AdminDashboard() {
                         <p className="text-sm font-black text-slate-900 tracking-tight">{log.email_user}</p>
                         <div className="flex items-center gap-3 mt-1.5">
                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{new Date(log.created_at).toLocaleString('id-ID')}</span>
-                           {log.order_id && <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg uppercase border border-blue-100">Ticket: #{log.order_id.toUpperCase()}</span>}
+                           {log.order_id && <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg uppercase border border-blue-100">Order: #{log.order_id.toUpperCase()}</span>}
                         </div>
                       </div>
                     </div>
@@ -289,7 +301,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="bg-slate-50/50 p-6 rounded-2xl text-[14px] font-medium text-slate-700 whitespace-pre-wrap border border-slate-100 leading-relaxed italic relative">
-                    <span className="absolute -top-3 left-6 bg-white px-2 text-[10px] font-black text-slate-300 uppercase italic">Message Body</span>
+                    <span className="absolute -top-3 left-6 bg-white px-2 text-[10px] font-black text-slate-300 uppercase italic">Isi Laporan</span>
                     "{log.body}"
                   </div>
                 </div>

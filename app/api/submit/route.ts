@@ -9,39 +9,40 @@ export async function POST(req: NextRequest) {
     await initDb();
     const { linkTikTok, jumlahView, serviceType, phoneNumber, deviceId } = await req.json();
 
-    if (!linkTikTok || !jumlahView || !deviceId) {
+    if (!linkTikTok || !deviceId) {
       return NextResponse.json({ message: 'Data tidak lengkap' }, { status: 400 });
     }
 
     if (serviceType.toUpperCase() === 'FREE') {
-      // Validasi Limit Free (Tetap 3000)
-      if (jumlahView > 3000) return NextResponse.json({ message: 'Layanan Free maksimal 3000 views' }, { status: 400 });
+      // FREE service is locked to exactly 1,000 views
+      const fixedFreeViews = 1000;
       
-      // Gunakan deviceId untuk pengecekan rate limit sesuai implementasi di lib/ratelimit.ts
+      // Enforce 25-hour rate limit lock
       const rateLimit = await checkRateLimit(deviceId);
       if (!rateLimit.allowed) {
-        return NextResponse.json({ message: `Limit Free: Tunggu ${rateLimit.waitTimeHours} jam lagi.` }, { status: 429 });
+        return NextResponse.json({ 
+          message: `Limit tercapai. Sisa waktu: ${rateLimit.waitTimeHours} jam.` 
+        }, { status: 429 });
       }
 
-      // Free tidak butuh phone_number
       const result = await sql`
         INSERT INTO orders (device_id, service_type, tiktok_link, views, status)
-        VALUES (${deviceId}, 'FREE', ${linkTikTok}, ${jumlahView}, 'processing')
+        VALUES (${deviceId}, 'FREE', ${linkTikTok}, ${fixedFreeViews}, 'processing')
         RETURNING *
       `;
       return NextResponse.json(result[0]);
     } else {
-      // Premium Service
+      // Premium Service Validation
       if (!phoneNumber) {
-        return NextResponse.json({ message: 'Nomor WhatsApp wajib untuk Premium (untuk bantuan refund)' }, { status: 400 });
+        return NextResponse.json({ message: 'Nomor WhatsApp wajib untuk Premium' }, { status: 400 });
       }
       
-      // Limit Premium ditingkatkan ke 200.000 views
-      if (jumlahView > 200000) {
-        return NextResponse.json({ message: 'Maksimal order Premium adalah 200.000 views' }, { status: 400 });
+      // Premium max 200k
+      if (jumlahView > 200000 || jumlahView < 1000) {
+        return NextResponse.json({ message: 'Premium: 1.000 - 200.000 views' }, { status: 400 });
       }
       
-      const expiredAt = new Date(Date.now() + 60 * 1000); // 60 detik batas upload bukti
+      const expiredAt = new Date(Date.now() + 120 * 1000); // 2 mins for premium payment upload
 
       const result = await sql`
         INSERT INTO orders (device_id, service_type, tiktok_link, phone_number, views, status, qris_expired_at)
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(result[0]);
     }
   } catch (error: any) {
-    console.error(error);
+    console.error("Order Submit Error:", error);
     return NextResponse.json({ message: 'Gagal memproses pesanan' }, { status: 500 });
   }
 }

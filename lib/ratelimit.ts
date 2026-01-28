@@ -4,12 +4,15 @@ export async function checkRateLimit(identifier: string): Promise<{ allowed: boo
   // Free service: 1 request per 25 hours
   const hoursLimit = 25;
   
-  // Menggunakan tabel orders (karena device_id bertindak sebagai identifier di skema utama)
+  if (!sql) return { allowed: true };
+
+  // Check for any FREE order within the last 25 hours for this device_id
   const lastRequest = await sql`
     SELECT created_at 
     FROM orders 
     WHERE device_id = ${identifier} 
     AND service_type = 'FREE'
+    AND created_at > NOW() - INTERVAL '25 hours'
     ORDER BY created_at DESC 
     LIMIT 1
   `;
@@ -22,12 +25,8 @@ export async function checkRateLimit(identifier: string): Promise<{ allowed: boo
   const currentTime = new Date().getTime();
   const diffHours = (currentTime - lastTime) / (1000 * 60 * 60);
 
-  if (diffHours < hoursLimit) {
-    return { 
-      allowed: false, 
-      waitTimeHours: Math.ceil(hoursLimit - diffHours) 
-    };
-  }
-
-  return { allowed: true };
+  return { 
+    allowed: false, 
+    waitTimeHours: Math.ceil(hoursLimit - diffHours) 
+  };
 }

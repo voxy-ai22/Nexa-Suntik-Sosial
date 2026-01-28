@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
@@ -13,7 +12,7 @@ export async function GET(req: NextRequest) {
 
     if (!id) return NextResponse.json({ message: 'ID diperlukan' }, { status: 400 });
 
-    const order = await sql`SELECT status FROM requests WHERE id = ${id}`;
+    const order = await sql`SELECT status FROM orders WHERE id = ${id}`;
 
     if (order.length === 0) return NextResponse.json({ message: 'Tidak ditemukan' }, { status: 404 });
 
