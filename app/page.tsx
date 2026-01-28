@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Rocket, CheckCircle2, Loader2, Camera, History, XCircle,
   MessageCircle, Send, FileText, ShieldCheck, Menu, X, Home as HomeIcon,
-  ChevronRight
+  ChevronRight, Clock, ShieldAlert
 } from 'lucide-react';
 import { QRIS_IMAGE_URL } from '@/lib/payment';
 
@@ -273,7 +273,11 @@ export default function Home() {
                           <div className="text-[7px] font-black text-blue-600 uppercase tracking-tighter">{h.service_type}</div>
                           <div className="text-xs font-bold text-slate-800">{h.jumlah_view.toLocaleString()} Views</div>
                         </div>
-                        <div className={`px-2 py-1 rounded-lg text-[7px] font-black uppercase border ${h.status === 'success' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-white text-slate-400 border-slate-200'}`}>{h.status.replace('_', ' ')}</div>
+                        <div className={`px-2 py-1 rounded-lg text-[7px] font-black uppercase border ${
+                          h.status === 'success' ? 'bg-green-50 text-green-600 border-green-100' : 
+                          h.status === 'failed' ? 'bg-red-50 text-red-600 border-red-100' :
+                          'bg-white text-slate-400 border-slate-200'
+                        }`}>{h.status.replace('_', ' ')}</div>
                       </div>
                     ))}
                     {userHistory.length === 0 && <p className="text-slate-300 font-bold text-[9px] text-center py-10 uppercase italic">No history yet</p>}
@@ -284,12 +288,24 @@ export default function Home() {
                   <div className="text-[9px] font-black text-slate-300 uppercase">ORDER ID: {orderResult.id.substring(0,8)}</div>
 
                   {orderResult.status === 'waiting_admin' ? (
-                    <div className="py-6 space-y-3">
-                      <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
-                        <Loader2 className="text-blue-600 w-6 h-6 animate-spin" />
+                    <div className="py-6 space-y-4">
+                      <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto relative">
+                        <Loader2 className="text-blue-600 w-8 h-8 animate-spin" />
+                        <ShieldCheck className="text-blue-600 w-4 h-4 absolute bottom-0 right-0" />
                       </div>
-                      <h3 className="text-sm font-black uppercase">Verifying Payment...</h3>
-                      <button onClick={() => setOrderResult(null)} className="text-blue-600 font-black text-[9px] uppercase hover:underline">Return to Home</button>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-black uppercase text-blue-600">Verifying Payment</h3>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase leading-relaxed px-6">
+                          Our team is currently matching your receipt with our bank records. This usually takes 5-15 minutes.
+                        </p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-xl flex items-center gap-3 justify-center">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-tighter">Status: Queued for Verification</span>
+                      </div>
+                      <button onClick={() => setOrderResult(null)} className="text-blue-600 font-black text-[10px] uppercase hover:underline flex items-center justify-center gap-2 mx-auto mt-4 bg-blue-50 px-6 py-2 rounded-full">
+                        <HomeIcon className="w-3 h-3" /> Back to Dashboard
+                      </button>
                     </div>
                   ) : orderResult.service_type === 'FREE' ? (
                     <div className="py-6 space-y-3">
@@ -300,16 +316,20 @@ export default function Home() {
                   ) : (
                     <div className="space-y-4">
                        <div className="bg-amber-50 text-amber-600 p-2 rounded-lg font-black text-[9px] flex justify-between items-center">
-                          <span>UPLOADING LIMIT:</span>
+                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> UPLOADING LIMIT:</span>
                           <span>{timer}s</span>
                        </div>
-                       <div className="bg-slate-100 p-2 rounded-xl"><img src={QRIS_IMAGE_URL} alt="QRIS" className="w-full rounded-lg max-h-64 object-contain mx-auto" /></div>
+                       <div className="bg-slate-100 p-2 rounded-xl border border-slate-200"><img src={QRIS_IMAGE_URL} alt="QRIS" className="w-full rounded-lg max-h-64 object-contain mx-auto" /></div>
                        <div className="text-center">
                           <p className="text-[9px] font-black text-slate-400 uppercase">Transfer amount:</p>
                           <p className="text-xl font-black text-blue-600">Rp {price.toLocaleString()}</p>
                        </div>
-                       <label className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase cursor-pointer flex items-center justify-center gap-2 hover:bg-blue-700">
-                          {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <><Camera className="w-4 h-4" /> Upload Receipt</>}
+                       <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 flex items-center gap-2">
+                         <ShieldAlert className="w-4 h-4 text-red-500 shrink-0" />
+                         <p className="text-[8px] font-bold text-red-600 uppercase text-left leading-tight">Pastikan nominal transfer sesuai. Gagal upload bukti = Order hangus.</p>
+                       </div>
+                       <label className="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-[10px] uppercase cursor-pointer flex items-center justify-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all">
+                          {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <><Camera className="w-4 h-4" /> Upload & Confirm Receipt</>}
                           <input type="file" className="hidden" accept="image/*" onChange={handleConfirm} disabled={loading} />
                        </label>
                     </div>

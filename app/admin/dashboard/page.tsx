@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LayoutDashboard, LogOut, Home as HomeIcon,
-  Mail, MessageSquare, User, Copy, ShieldCheck, CheckCircle, Loader2, RefreshCw, BellRing
+  Mail, MessageSquare, User, Copy, ShieldCheck, CheckCircle, Loader2, RefreshCw, BellRing,
+  Trash2, Check, X, Clock, AlertCircle, ExternalLink
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -30,13 +31,10 @@ export default function AdminDashboard() {
         const res = await fetch(`/api/admin/requests?type=${filter}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          
-          // Detect if new orders arrived
           if (isBackground && data.length > prevDataCount.current) {
             setHasNewData(true);
-            setTimeout(() => setHasNewData(false), 5000); // Reset alert after 5s
+            setTimeout(() => setHasNewData(false), 5000);
           }
-          
           prevDataCount.current = data.length;
           setOrders(data);
         }
@@ -58,16 +56,40 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
-
-    // High frequency 5s polling
     refreshInterval.current = setInterval(() => {
       fetchData(true);
     }, 5000);
-
     return () => {
       if (refreshInterval.current) clearInterval(refreshInterval.current);
     };
   }, [fetchData]);
+
+  const updateOrderStatus = async (id: string, status: string) => {
+    try {
+      const res = await fetch('/api/admin/requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      });
+      if (res.ok) fetchData(true);
+    } catch (e) {
+      alert("Failed to update status");
+    }
+  };
+
+  const deleteOrder = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this order? This action cannot be undone.")) return;
+    try {
+      const res = await fetch('/api/admin/requests', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      if (res.ok) fetchData(true);
+    } catch (e) {
+      alert("Failed to delete order");
+    }
+  };
 
   const updateSupportStatus = async (id: string, status: string) => {
     try {
@@ -82,7 +104,6 @@ export default function AdminDashboard() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Simple non-intrusive alert logic could be added here
   };
 
   return (
@@ -158,38 +179,58 @@ export default function AdminDashboard() {
                      {order.service_type === 'PREMIUM' && (
                        <div className="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
                      )}
-                     <div className="space-y-3">
+                     <div className="space-y-3 flex-1">
                         <div className="flex items-center gap-3">
                           <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase border-2 ${order.service_type === 'PREMIUM' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>{order.service_type}</span>
                           <span className="text-[10px] font-black text-slate-300 tracking-wider">#{order.id.substring(0,8).toUpperCase()}</span>
                         </div>
-                        <p className="text-sm font-black text-slate-800 truncate max-w-lg group-hover:text-blue-600 transition-colors">{order.tiktok_link}</p>
+                        <a href={order.tiktok_link} target="_blank" rel="noopener noreferrer" className="text-sm font-black text-slate-800 truncate block max-w-lg group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                          {order.tiktok_link} <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                        </a>
                         <div className="flex flex-wrap items-center gap-4">
                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase bg-slate-50 px-2 py-1 rounded-lg">
                               <User className="w-3 h-3" /> {order.device_id.substring(0,12)}... 
                               <button onClick={() => copyToClipboard(order.device_id)} className="text-blue-400 hover:text-blue-600 transition-all ml-1"><Copy className="w-3 h-3" /></button>
                            </div>
                            <div className="text-[9px] text-slate-300 font-bold uppercase tracking-tight">{new Date(order.created_at).toLocaleString('id-ID')}</div>
+                           {order.payment_proof_url && (
+                             <a href={order.payment_proof_url} target="_blank" className="text-[9px] font-black text-amber-600 underline uppercase italic">View Proof</a>
+                           )}
                         </div>
                      </div>
                      <div className="flex items-center gap-8 mt-6 md:mt-0">
-                        <div className="text-right">
+                        <div className="text-right min-w-[100px]">
                            <p className="text-2xl font-black text-slate-900 leading-none italic">{order.views.toLocaleString()}</p>
                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1.5">Views Target</p>
                         </div>
                         <div className="h-12 w-px bg-slate-100 hidden md:block"></div>
-                        <div className="flex flex-col items-end gap-2 min-w-[130px]">
+                        <div className="flex flex-col items-end gap-2 min-w-[160px]">
                            <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border-2 shadow-sm ${
                              order.status === 'success' ? 'bg-green-50 text-green-600 border-green-200' : 
                              order.status === 'pending_payment' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                              order.status === 'waiting_admin' ? 'bg-blue-600 text-white border-blue-500 animate-pulse' :
+                             order.status === 'failed' ? 'bg-red-50 text-red-600 border-red-200' :
                              'bg-slate-50 text-slate-400 border-slate-200'
                            }`}>
                              {order.status.replace('_', ' ')}
                            </div>
-                           {order.status === 'waiting_admin' && (
-                             <button className="text-[9px] font-black text-blue-600 hover:text-blue-800 underline uppercase tracking-tighter decoration-2 underline-offset-4">Review Receipt</button>
-                           )}
+                           
+                           {/* Admin Actions */}
+                           <div className="flex items-center gap-1.5 mt-2">
+                             <button onClick={() => updateOrderStatus(order.id, 'success')} title="Mark Success" className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all border border-green-200">
+                               <Check className="w-3.5 h-3.5" />
+                             </button>
+                             <button onClick={() => updateOrderStatus(order.id, 'waiting_admin')} title="Set Pending/Waiting" className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-200">
+                               <Clock className="w-3.5 h-3.5" />
+                             </button>
+                             <button onClick={() => updateOrderStatus(order.id, 'failed')} title="Mark Failed" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-200">
+                               <X className="w-3.5 h-3.5" />
+                             </button>
+                             <div className="w-px h-4 bg-slate-200 mx-1"></div>
+                             <button onClick={() => deleteOrder(order.id)} title="Delete/Clear Order" className="p-2 bg-slate-900 text-white rounded-lg hover:bg-red-600 transition-all">
+                               <Trash2 className="w-3.5 h-3.5" />
+                             </button>
+                           </div>
                         </div>
                      </div>
                   </div>
