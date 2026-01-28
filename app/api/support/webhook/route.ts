@@ -1,27 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
-import nodemailer from 'nodemailer';
+import { sql, initDb } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
-    // Asumsi payload dari Inbound Email Service (seperti Resend/SendGrid)
+    await initDb();
+    if (!sql) return NextResponse.json({ message: 'DB Error' }, { status: 500 });
+
     const payload = await req.json();
     const fromEmail = payload.from; 
-    const subject = payload.subject;
-    const body = payload.text || payload.html;
+    const subject = payload.subject || 'No Subject';
+    const body = payload.text || payload.html || 'No Content';
 
-    // 1. PENCEGAHAN EMAIL LOOP
-    // Jangan balas jika subject mengandung Re: atau Fwd: yang sudah kita proses
+    // Anti-Loop Logic
     if (subject.toLowerCase().includes('re:') || subject.toLowerCase().includes('fwd:')) {
-      // Kita tetap simpan ke log agar admin bisa baca, tapi tidak auto-reply lagi
       await sql`
         INSERT INTO support_email_logs (email_user, direction, subject, body, status)
-        VALUES (${fromEmail}, 'incoming', ${subject}, ${body}, 'Data Complete')
+        VALUES (${fromEmail}, 'incoming', ${subject}, ${body}, 'Update Received')
       `;
-      return NextResponse.json({ message: 'Logged without auto-reply (Anti-Loop)' });
+      return NextResponse.json({ message: 'Logged without auto-reply' });
     }
 
-    // 2. Cek apakah sudah pernah kirim auto-reply untuk email ini dalam 1 jam terakhir
+    // Rate Limit Auto-Reply (1 per hour per user)
     const recentLogs = await sql`
       SELECT id FROM support_email_logs 
       WHERE email_user = ${fromEmail} 
@@ -30,10 +29,9 @@ export async function POST(req: NextRequest) {
     `;
 
     if (recentLogs.length > 0) {
-      return NextResponse.json({ message: 'Rate limited auto-reply' });
+      return NextResponse.json({ message: 'Rate limited' });
     }
 
-    // 3. Simpan balasan user
     await sql`
       INSERT INTO support_email_logs (email_user, direction, subject, body, status)
       VALUES (${fromEmail}, 'incoming', ${subject}, ${body}, 'Waiting Admin Review')
@@ -41,6 +39,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Webhook Error:", error);
     return NextResponse.json({ message: 'Webhook Error' }, { status: 500 });
   }
 }

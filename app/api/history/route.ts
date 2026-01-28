@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { sql, initDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    await initDb();
+    if (!sql) return NextResponse.json([], { status: 500 });
+
     const { searchParams } = new URL(req.url);
     const deviceId = searchParams.get('deviceId');
 

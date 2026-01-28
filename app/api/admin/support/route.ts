@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { sql, initDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +8,9 @@ export async function GET(req: NextRequest) {
   if (auth !== 'true') return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
   try {
+    await initDb();
+    if (!sql) return NextResponse.json({ message: 'DB Error' }, { status: 500 });
+
     const data = await sql`
       SELECT * FROM support_email_logs 
       ORDER BY created_at DESC 
@@ -24,6 +27,7 @@ export async function PATCH(req: NextRequest) {
   if (auth !== 'true') return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
   try {
+    await initDb();
     const { id, status } = await req.json();
     await sql`
       UPDATE support_email_logs 
