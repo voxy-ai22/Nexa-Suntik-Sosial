@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Rocket, CheckCircle2, Loader2, Camera, History, XCircle,
   MessageCircle, Send, FileText, ShieldCheck, Menu, X, Home as HomeIcon,
-  ChevronRight, Clock, ShieldAlert
+  ChevronRight, Clock, ShieldAlert, Info, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { QRIS_IMAGE_URL } from '@/lib/payment';
 
@@ -331,20 +331,114 @@ export default function Home() {
 
       {showDoc && (
         <div className="fixed inset-0 z-[101] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-white w-full max-w-lg rounded-[40px] p-10 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black uppercase italic tracking-tighter">Guide Book</h2>
-              <button onClick={() => setShowDoc(false)}><XCircle className="w-8 h-8 text-slate-200 hover:text-red-500" /></button>
+          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-white w-full max-w-2xl rounded-[40px] p-8 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            <div className="flex justify-between items-center mb-6 px-4">
+              <div className="flex items-center gap-3">
+                <FileText className="text-blue-600 w-6 h-6" />
+                <h2 className="text-xl font-black uppercase italic tracking-tighter">Prosedur Layanan & Dukungan</h2>
+              </div>
+              <button onClick={() => setShowDoc(false)}><XCircle className="w-7 h-7 text-slate-200 hover:text-red-500" /></button>
             </div>
-            <div className="space-y-8 text-[11px] font-bold uppercase">
-              <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100">
-                <p className="text-blue-600 mb-2">Tier FREE</p>
-                <p className="text-slate-500">• 1,000 Views Per Request<br/>• Cooldown 25 Jam per ID<br/>• Tanpa Garansi</p>
-              </div>
-              <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100">
-                <p className="text-amber-600 mb-2">Tier PREMIUM</p>
-                <p className="text-slate-500">• Max 200,000 Views<br/>• Prioritas Antrean Utama<br/>• Garansi Refund 100%</p>
-              </div>
+            
+            <div className="overflow-y-auto px-6 space-y-8 pb-10 text-[13px] text-slate-600 leading-relaxed font-medium">
+              <section className="space-y-3">
+                <div className="flex items-center gap-2 text-blue-600 font-black uppercase text-[11px] tracking-wider">
+                  <Info className="w-4 h-4" /> 1. Email Resmi Nexa
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p>Semua komunikasi dilakukan melalui sistem internal. Pengguna tidak menghubungi admin secara langsung, namun wajib menggunakan form support.</p>
+                  <p className="mt-2 text-amber-600 text-[11px] font-bold italic">⚠️ Alamat email tidak ditampilkan ke publik dan hanya digunakan sistem internal.</p>
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">2. Alur Kontak Pengguna</h3>
+                <p>Pengguna wajib menggunakan Form Hubungi Admin di website. Sistem otomatis mengirim email balasan, admin tidak perlu membalas manual di tahap awal.</p>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">3. Balasan Otomatis (Auto-Reply)</h3>
+                <p>Sistem mengirim balasan otomatis. User wajib membalas email tersebut dengan:</p>
+                <ul className="list-disc list-inside bg-slate-50 p-4 rounded-xl space-y-1 font-bold">
+                  <li>Bukti pembayaran (Screenshot QRIS)</li>
+                  <li>Nomor WhatsApp aktif</li>
+                  <li>ID Pesanan</li>
+                  <li>Link TikTok yang dipesan</li>
+                </ul>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">4. Estimasi Waktu Layanan</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p className="font-black text-blue-600 uppercase text-[10px]">Free Tier</p>
+                    <p className="font-bold">1–2 Jam</p>
+                  </div>
+                  <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                    <p className="font-black text-amber-600 uppercase text-[10px]">Premium Tier</p>
+                    <p className="font-bold">Maks. 1.5 Jam</p>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-red-600 uppercase text-[11px] tracking-wider">5. Batas Waktu & Refund</h3>
+                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                  <p className="text-red-700">Jika pesanan PREMIUM belum berjalan dalam 1.5 jam setelah data lengkap dikirim, admin akan melakukan pengembalian dana (refund) penuh.</p>
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">6. Ketentuan Nomor Aktif</h3>
+                <p>Pengguna wajib menyertakan nomor aktif untuk kendala sistem atau konfirmasi refund. Ketidaksediaan nomor dapat menunda proses penanganan.</p>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">7. Pencatatan Riwayat</h3>
+                <p>Semua aktivitas pesan, auto-reply, dan balasan user dicatat otomatis dalam database dan tetap tersimpan meski admin logout.</p>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">8. Pencegahan Penyalahgunaan</h3>
+                <p>Auto-reply hanya dikirim satu kali per ID pesanan. Sistem tidak merespon email berulang tanpa data valid.</p>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">9. Persetujuan Pengguna</h3>
+                <p>Dengan mengirim form support, pengguna dianggap setuju dengan seluruh prosedur dan estimasi waktu yang berlaku.</p>
+              </section>
+
+              <section className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-2 text-slate-900 font-black uppercase text-[11px] tracking-wider">
+                  <RefreshCw className="w-4 h-4 text-blue-600" /> 10. Ketentuan Refill (Update 15/02/2026)
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-slate-100 p-4 rounded-xl text-center border border-slate-200">
+                    <p className="text-[10px] uppercase font-black opacity-40">Views</p>
+                    <p className="text-[11px] font-black">❌ NO REFILL</p>
+                  </div>
+                  <div className="bg-slate-100 p-4 rounded-xl text-center border border-slate-200">
+                    <p className="text-[10px] uppercase font-black opacity-40">Followers</p>
+                    <p className="text-[11px] font-black">❌ NO REFILL</p>
+                  </div>
+                  <div className="bg-slate-100 p-4 rounded-xl text-center border border-slate-200">
+                    <p className="text-[10px] uppercase font-black opacity-40">Likes</p>
+                    <p className="text-[11px] font-black">❌ NO REFILL</p>
+                  </div>
+                </div>
+                <div className="bg-blue-50/50 p-4 rounded-xl text-[10px] font-bold text-blue-700 italic border border-blue-100">
+                  Update Terakhir:<br/>
+                  • TikTok View Refill 30h: 05/02/2026<br/>
+                  • TikTok Follower No Refill: 10/02/2026<br/>
+                  • TikTok Like No Refill: 15/02/2026
+                </div>
+              </section>
+            </div>
+
+            <div className="p-6 bg-white border-t border-slate-100">
+              <button onClick={() => setShowDoc(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-blue-600 shadow-xl shadow-slate-100 transition-all italic">
+                Selesai Membaca & Mengerti
+              </button>
             </div>
           </motion.div>
         </div>

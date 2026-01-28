@@ -67,8 +67,8 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/logout', { method: 'POST' });
-      router.push('/admin/login');
-      router.refresh();
+      // Forced window redirect to clear any residual routing cache
+      window.location.href = '/admin/login';
     } catch (e) {
       console.error("Logout failed", e);
     }
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
   };
 
   const deleteOrder = async (id: string) => {
-    if (!confirm("Hapus pesanan ini secara permanen?")) return;
+    if (!confirm("Hapus pesanan ini secara permanen dari database?")) return;
     try {
       const res = await fetch('/api/admin/requests', {
         method: 'DELETE',
