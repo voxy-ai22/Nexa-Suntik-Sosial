@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Rocket, CheckCircle2, Loader2, Camera, History, XCircle,
-  MessageCircle, Send, FileText
+  MessageCircle, Send, FileText, ShieldCheck, ChevronRight
 } from 'lucide-react';
 import { QRIS_IMAGE_URL } from '@/lib/payment';
 
@@ -132,9 +132,12 @@ export default function Home() {
             <Rocket className="text-blue-600 w-5 h-5" />
             <h1 className="text-base font-black tracking-tighter uppercase italic">Nexa Sosial</h1>
           </div>
-          <div className="flex gap-3">
-             <button onClick={() => setShowDoc(true)} className="hidden sm:flex text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase items-center gap-1">
+          <div className="flex gap-4 items-center">
+             <button onClick={() => setShowDoc(true)} className="hidden md:flex text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase items-center gap-1">
                <FileText className="w-3.5 h-3.5" /> Guide
+             </button>
+             <button onClick={() => window.location.href='/admin/dashboard'} className="text-[10px] font-black text-slate-400 hover:text-red-600 uppercase flex items-center gap-1">
+               <ShieldCheck className="w-3.5 h-3.5" /> Admin
              </button>
              <button onClick={() => setShowSupport(true)} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-xl">
                <MessageCircle className="w-3.5 h-3.5" /> Support
@@ -285,23 +288,58 @@ export default function Home() {
         </div>
       )}
 
-      {/* Doc Modal - Optimized */}
+      {/* Doc Modal - Updated Content */}
       {showDoc && (
         <div className="fixed inset-0 z-[101] bg-slate-900/50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg max-h-[70vh] rounded-[24px] overflow-y-auto p-6 relative">
-            <button onClick={() => setShowDoc(false)} className="absolute top-4 right-4 text-slate-300"><XCircle className="w-5 h-5" /></button>
-            <h2 className="text-lg font-black uppercase mb-4">How it works</h2>
-            <div className="space-y-4 text-[11px] font-bold text-slate-500 leading-relaxed uppercase">
-               <div className="p-3 bg-slate-50 rounded-xl border-l-4 border-blue-500">
-                  <p className="text-slate-800">1. Free views available every 25 hours per device.</p>
-               </div>
-               <div className="p-3 bg-slate-50 rounded-xl border-l-4 border-green-500">
-                  <p className="text-slate-800">2. Premium views are faster and come with a refund guarantee.</p>
-               </div>
-               <div className="p-3 bg-slate-50 rounded-xl border-l-4 border-amber-500">
-                  <p className="text-slate-800">3. If your premium views don't start within 30 mins, contact support with your Receipt.</p>
-               </div>
+          <div className="bg-white w-full max-w-lg max-h-[85vh] rounded-[24px] overflow-y-auto p-8 relative">
+            <button onClick={() => setShowDoc(false)} className="absolute top-6 right-6 text-slate-300"><XCircle className="w-6 h-6" /></button>
+            <h2 className="text-2xl font-black uppercase mb-6 flex items-center gap-2">
+              <FileText className="text-blue-600" /> Dokumen Sistem
+            </h2>
+            
+            <div className="space-y-8 text-[11px] font-bold text-slate-600 uppercase tracking-wide leading-relaxed">
+               <section className="space-y-3">
+                  <h3 className="text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                    Layanan Free (Gratis)
+                  </h3>
+                  <div className="bg-blue-50/50 p-4 rounded-xl space-y-2">
+                    <p>• Kuota: Maksimal 3.000 Views per order.</p>
+                    <p>• Limit: 1 order per 25 jam per perangkat.</p>
+                    <p>• Kecepatan: Estimasi proses 1-12 jam tergantung antrean.</p>
+                  </div>
+               </section>
+
+               <section className="space-y-3">
+                  <h3 className="text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    Layanan Premium (Berbayar)
+                  </h3>
+                  <div className="bg-green-50/50 p-4 rounded-xl space-y-2 text-green-800">
+                    <p>• Kuota: Hingga 200.000 Views per order.</p>
+                    <p>• Kecepatan: Prioritas utama (5-30 menit).</p>
+                    <p>• Garansi: Refund 100% saldo jika views tidak masuk dalam 24 jam.</p>
+                    <p>• WA: Wajib mencantumkan nomor WA untuk koordinasi refund.</p>
+                  </div>
+               </section>
+
+               <section className="space-y-3">
+                  <h3 className="text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                    Panduan Admin
+                  </h3>
+                  <div className="bg-slate-100 p-4 rounded-xl space-y-2 text-slate-500">
+                    <p>• Akses: Klik menu "Admin" di Navbar atau buka /admin/dashboard.</p>
+                    <p>• Monitoring: Admin wajib mengecek tab "Orders" setiap 15 menit.</p>
+                    <p>• Validasi: Cek bukti transfer yang diunggah user pada status "Waiting Admin".</p>
+                    <p>• Support: Tanggapi laporan di tab "Support" dan balas via email yang tertera.</p>
+                  </div>
+               </section>
             </div>
+            
+            <button onClick={() => setShowDoc(false)} className="w-full mt-8 bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest">
+              Tutup Dokumen
+            </button>
           </div>
         </div>
       )}
